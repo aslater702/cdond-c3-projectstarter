@@ -132,9 +132,7 @@ jobs:
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress'\
-              --output text >> inventory --profile AdminAES
+            ansible-playbook -i inventory.txt main.yml
       - persist_to_workspace:
           root: ~/
           paths:
