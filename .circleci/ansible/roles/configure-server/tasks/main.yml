@@ -28,7 +28,3 @@
     global: yes
     production: yes
     state: present
-
-- name: Executing node
-  shell: |
-    pm2 start ~/web/index.js -f
