@@ -146,10 +146,6 @@ jobs:
       - image: python:3.7-alpine3.11
     steps:
       - checkout
-      - run: apk add --update tar
-      - run: apk add --update gzip
-      - run: pip install awscli
-      - run: aws --version
       - add_ssh_keys:
           fingerprints: ["9c:0c:9f:2b:0a:3a:e7:d1:83:b8:00:ab:0d:cc:f4:2a"]
       - attach_workspace:
@@ -158,10 +154,15 @@ jobs:
           name: Install dependencies
           command: |
             apk add --update ansible
+            apk add --update tar
+            apk add --update gzip
+            pip install awscli
+            aws --version
       - run:
           name: Configure server
           command: |
-            ansible-playbook -i inventory.txt main.yml 
+            cd .circleci/ansible
+            ansible-playbook -i inventory.txt configure-server.yml
       - destroy-environment
 
 workflows:
