@@ -1,4 +1,5 @@
 version: 2.1
+# make sure RDS is running
 
 commands:
   destroy-environment:
