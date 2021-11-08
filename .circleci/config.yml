@@ -255,6 +255,9 @@ jobs:
             apk add --update ansible
             apk add --update tar
             apk add --update gzip
+            apk add --update curl
+            apk add --update nodejs npm
+            apk add --update npm
             pip install awscli
             aws --version
       - run:
@@ -262,7 +265,6 @@ jobs:
           command: |
             cd backend
             npm i
-            npm install
             npm run build
             cd ..
             # Zip the directory
