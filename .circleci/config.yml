@@ -31,6 +31,29 @@ commands:
             fi 
 
 jobs:
+  get-oldworkflowID:
+    docker:
+    - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Get old stack workflow id
+          command: |
+            # Fetch the Old workflow ID
+            export OldWorkflowID=$(aws cloudformation \
+                    list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                    --no-paginate --output text >> .circleci/ansible/oldworkflow.txt)
+            echo OldWorkflowID: "${OldWorkflowID}"
+            echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
+            # Fetch the stack names          
+            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+                    --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+            echo Stack names: "${STACKS[@]}"
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/oldworkflow.txt
+
   build-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -325,9 +348,9 @@ jobs:
 
   cloudfront-update:
     docker:
-      - image: amazon/aws-cli
-    steps:
-      - checkout
+      - image: amazon/aws-cli    
+    steps:      
+      - checkout     
       - run:
           name: Install dependencies
           command: |
@@ -349,23 +372,14 @@ jobs:
         - image: amazon/aws-cli
       steps:
         - checkout
-        - run:
-            name: Get old stack workflow id
-            command: |
-              # Fetch the Old workflow ID
-              export OldWorkflowID=$(aws cloudformation \
-                      list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
-                      --no-paginate --output text)
-              echo OldWorkflowID: "${OldWorkflowID}"
-              echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
-              # Fetch the stack names          
-              export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
-                      --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
-              echo Stack names: "${STACKS[@]}"
+        - attach_workspace:
+            at: ~/
         - run:
             name: Remove old stacks and files
             command: |
-              # the issue is here with getting the old workflow ID into this run command- what is the general permissions of run commands relative to eachother?
+              cd .circleci/ansible
+              cat ~/oldworkflow.txt
+              OldWorkflowID=$(cat ~/oldworkflow.txt)
               echo OldWorkflowID: "${OldWorkflowID}"
               echo $OldWorkflowID
               if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowID}" ]]
@@ -381,6 +395,7 @@ jobs:
 workflows:
   default:
     jobs:
+      - get-oldworkflowID
       - build-frontend
       - build-backend
       - test-frontend:
@@ -409,4 +424,4 @@ workflows:
       - cloudfront-update:
           requires: [smoke-test]
       - cleanup:
-          requires: [cloudfront-update]
+          requires: [cloudfront-update, get-oldworkflowID]
