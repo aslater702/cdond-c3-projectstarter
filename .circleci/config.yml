@@ -366,7 +366,6 @@ jobs:
         - run:
             name: Remove old stacks and files
             command: |
-              export CIRCLE_WORKFLOW_ID=1234567
               for i in "${STACKS[@]}" 
               do 
                 if [[ $i =~ "${CIRCLE_WORKFLOW_ID:0:7}" ]]
@@ -376,7 +375,7 @@ jobs:
                   echo "$i"
                 else
                   echo "---------delete confirmed----------"
-                  echo "$i"
+                  echo "delete stack: $i"
                 fi
               done
                   
