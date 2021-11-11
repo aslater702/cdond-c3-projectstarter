@@ -375,7 +375,6 @@ jobs:
                 fi
               done
                   
-#master branch push
 workflows:
   default:
     jobs:
